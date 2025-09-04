@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Emergency Blood — Donate / Need</title>
+  <style>
+    :root{--bg:#f6fbff;--card:#ffffff;--accent:#d32f2f;--muted:#6b7280}
+    *{box-sizing:border-box;font-family:Inter,system-ui,Arial,Helvetica,sans-serif}
+    body{margin:0;min-height:100vh;background:linear-gradient(180deg,#f0f8ff 0%,var(--bg) 100%);padding:20px}
+    .container{max-width:980px;margin:0 auto}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    h1{margin:0;font-size:20px}
+    .tabs{display:flex;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:0 6px 18px rgba(10,20,40,.06)}
+    .tab{flex:1;padding:12px 14px;text-align:center;cursor:pointer;font-weight:600}
+    .tab.active{background:linear-gradient(90deg,rgba(211,47,47,.08),rgba(211,47,47,.04));color:var(--accent)}
+    .card{background:var(--card);padding:14px;border-radius:12px;box-shadow:0 6px 18px rgba(10,20,40,.06);margin-top:14px}
+    form .row{display:flex;gap:10px;margin-bottom:10px}
+    input,select,button,textarea{padding:10px;border:1px solid #e6e9ef;border-radius:8px;font-size:14px}
+    input:focus,select:focus,textarea:focus{outline:2px solid rgba(211,47,47,.08)}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    .col{flex:1}
+    .small{flex:.6}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{background:var(--accent);color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer}
+    .btn.ghost{background:#fff;border:1px solid #ddd;color:var(--muted)}
+    .list{margin-top:12px}
+    .donor{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;border:1px solid #f0f2f5;margin-bottom:8px}
+    .donor .meta{display:flex;gap:10px;align-items:center}
+    .badge{padding:6px 8px;border-radius:8px;font-weight:700}
+    .available{background:#e6ffef;color:#0c8a4a}
+    .not{background:#fff0f0;color:#b22222;border:1px solid #ffdede}
+    .muted{color:var(--muted);font-size:13px}
+    @media(max-width:720px){.row{flex-direction:column}.small{flex:1}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Emergency Blood — Register / Request</h1>
+      <div class="muted">Quickly find donors near you</div>
+    </header>
+
+    <div class="tabs" role="tablist">
+      <div class="tab active" data-tab="donate">Donate</div>
+      <div class="tab" data-tab="need">Need</div>
+    </div>
+
+    <div class="card" id="donate-panel">
+      <form id="donorForm">
+        <div class="row">
+          <div class="col">
+            <label>Name</label>
+            <input type="text" id="donorName" required />
+          </div>
+          <div class="small">
+            <label>Age</label>
+            <input type="number" id="donorAge" min="18" max="65" required />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <label>Blood group</label>
+            <select id="donorBlood" required>
+              <option value="">Select</option>
+              <option>A+">A+</option>
+              <option>A-">A-</option>
+              <option>B+">B+</option>
+              <option>B-">B-</option>
+              <option>O+">O+</option>
+              <option>O-">O-</option>
+              <option>AB+">AB+</option>
+              <option>AB-">AB-</option>
+            </select>
+          </div>
+          <div class="col">
+            <label>Email</label>
+            <input type="email" id="donorEmail" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <label>Location (city / area)</label>
+            <input type="text" id="donorLocation" placeholder="e.g. Bengaluru, Jayanagar" required />
+          </div>
+          <div class="small">
+            <label>Mobile number</label>
+            <input type="tel" id="donorMobile" placeholder="10 digits" required />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <label>Allow geolocation (optional)</label>
+            <div class="controls">
+              <button type="button" class="btn ghost" id="useGeo">Use my location</button>
+              <div id="geoStatus" class="muted">Lat/Lng not set</div>
+            </div>
+          </div>
+          <div class="small">
+            <label>Donation availability</label>
+            <div class="controls">
+              <button type="button" id="availableToggle" class="btn ghost">Mark Available</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <label>Maximum donations per year: <strong>2</strong></label>
+            <div class="muted">The system will prevent registering more than 2 donations in the same calendar year.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn" type="submit">Register / Update</button>
+          <button type="button" class="btn ghost" id="clearForm">Clear</button>
+        </div>
+      </form>
+
+      <div class="card" style="margin-top:14px">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label style="margin:0">Search donors</label>
+          <input id="searchBlood" placeholder="Blood group (e.g. O+)" style="width:140px" />
+          <input id="searchLocation" placeholder="Location (city)" style="width:200px" />
+          <button class="btn ghost" id="searchBtn">Search</button>
+          <button class="btn ghost" id="resetSearch">Reset</button>
+          <button class="btn ghost" id="locNearby">Find nearby (allow geolocation)</button>
+        </div>
+
+        <div class="list" id="donorList"></div>
+      </div>
+    </div>
+
+    <div class="card" id="need-panel" style="display:none">
+      <h3>Request Blood</h3>
+      <form id="needForm">
+        <div class="row">
+          <div class="col"><label>Name</label><input id="needName" required /></div>
+          <div class="small"><label>Blood group needed</label>
+            <select id="needBlood" required>
+              <option value="">Select</option>
+              <option>A+">A+</option>
+              <option>A-">A-</option>
+              <option>B+">B+</option>
+              <option>B-">B-</option>
+              <option>O+">O+</option>
+              <option>O-">O-</option>
+              <option>AB+">AB+</option>
+              <option>AB-">AB-</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col"><label>Location</label><input id="needLocation" required /></div>
+          <div class="small"><label>Contact mobile</label><input id="needMobile" required /></div>
+        </div>
+        <div style="margin-top:10px"><button class="btn" type="submit">Post Request</button></div>
+      </form>
+
+      <div class="card" style="margin-top:12px">
+        <h4>Active Requests</h4>
+        <div id="needList"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Simple app state stored in localStorage
+    const storageKey = 'ebd_data_v1';
+    let state = {donors: [], requests: []};
+    const maxPerYear = 2;
+    let currentAvailable = false;
+
+    function loadState(){
+      try{const s = localStorage.getItem(storageKey); if(s) state = JSON.parse(s);}catch(e){console.error(e)}
+    }
+    function saveState(){ localStorage.setItem(storageKey,JSON.stringify(state)); }
+
+    // Helpers
+    function uid(){return 'id'+Math.random().toString(36).slice(2,9)}
+    function yearOf(ts){return new Date(ts).getFullYear()}
+
+    // Init
+    loadState();
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',e=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'))
+      t.classList.add('active');
+      const tab = t.dataset.tab;
+      document.getElementById('donate-panel').style.display = tab==='donate' ? 'block' : 'none';
+      document.getElementById('need-panel').style.display = tab==='need' ? 'block' : 'none';
+    }))
+
+    // Available toggle
+    document.getElementById('availableToggle').addEventListener('click',()=>{
+      currentAvailable = !currentAvailable; updateAvailableBtn();
+    })
+    function updateAvailableBtn(){
+      const btn = document.getElementById('availableToggle');
+      btn.textContent = currentAvailable ? 'Available — Yes' : 'Mark Available';
+      btn.classList.toggle('ghost', !currentAvailable);
+    }
+    updateAvailableBtn();
+
+    // Geo
+    let geo = null;
+    document.getElementById('useGeo').addEventListener('click',()=>{
+      if(!navigator.geolocation){alert('Geolocation not supported')}
+      else navigator.geolocation.getCurrentPosition(pos=>{
+        geo = {lat:pos.coords.latitude,lng:pos.coords.longitude};
+        document.getElementById('geoStatus').textContent = 'Lat:'+geo.lat.toFixed(4)+', Lng:'+geo.lng.toFixed(4);
+      },err=>{alert('Unable to get location: '+err.message)})
+    })
+
+    // Register donor
+    document.getElementById('donorForm').addEventListener('submit',e=>{
+      e.preventDefault();
+      const name = document.getElementById('donorName').value.trim();
+      const age = Number(document.getElementById('donorAge').value);
+      const blood = document.getElementById('donorBlood').value;
+      const email = document.getElementById('donorEmail').value.trim();
+      const location = document.getElementById('donorLocation').value.trim();
+      const mobile = document.getElementById('donorMobile').value.trim();
+
+      if(!name||!blood||!location||!mobile){alert('Please fill required fields');return}
+      if(age<18||age>65){alert('Donor age must be between 18 and 65');return}
+
+      // Find existing by mobile
+      let donor = state.donors.find(d=>d.mobile===mobile);
+      const now = Date.now();
+      if(!donor){
+        donor = {id:uid(),name,age,blood,email,location,mobile,geo,available:currentAvailable,donations:[],donationCountThisYear:0,lastDonationYear:null}
+        state.donors.push(donor);
+      } else {
+        donor.name=name; donor.age=age; donor.blood=blood; donor.email=email; donor.location=location; donor.geo=geo; donor.available=currentAvailable;
+      }
+
+      // Enforce max per year: if they try to 'register' as donating now, we record a donation entry only if allowed
+      // For simplicity, assume registration counts as a donation event if donor marks available then clicks Register.
+      const thisYear = new Date().getFullYear();
+      if(donor.lastDonationYear!==thisYear) donor.donationCountThisYear = 0;
+      // If they are available now we record one donation attempt
+      if(currentAvailable){
+        if(donor.donationCountThisYear >= maxPerYear){
+          alert('You have already reached the maximum donations ('+maxPerYear+') for this year.');
+        } else {
+          donor.donations.push({ts:now});
+          donor.donationCountThisYear += 1;
+          donor.lastDonationYear = thisYear;
+          alert('Registered and donation recorded. Thank you!')
+        }
+      } else {
+        alert('Profile saved. Toggle "Available" when you can donate.');
+      }
+
+      saveState(); renderDonors();
+    })
+
+    document.getElementById('clearForm').addEventListener('click',()=>{document.getElementById('donorForm').reset(); geo=null; document.getElementById('geoStatus').textContent='Lat/Lng not set'; currentAvailable=false; updateAvailableBtn();})
+
+    // Search
+    document.getElementById('searchBtn').addEventListener('click',renderDonors)
+    document.getElementById('resetSearch').addEventListener('click',()=>{document.getElementById('searchBlood').value='';document.getElementById('searchLocation').value='';renderDonors()})
+
+    // Nearby search (uses browser geolocation)
+    document.getElementById('locNearby').addEventListener('click',()=>{
+      if(!navigator.geolocation){alert('Geolocation not supported');return}
+      navigator.geolocation.getCurrentPosition(pos=>{
+        const lat = pos.coords.latitude; const lng = pos.coords.longitude;
+        // We'll sort donors by distance if they have geo
+        renderDonors({nearby:{lat,lng}});
+      },err=>alert('Unable to get your location: '+err.message))
+    })
+
+    // Need Form
+    document.getElementById('needForm').addEventListener('submit',e=>{
+      e.preventDefault();
+      const name=document.getElementById('needName').value.trim();
+      const blood=document.getElementById('needBlood').value; const location=document.getElementById('needLocation').value.trim(); const mobile=document.getElementById('needMobile').value.trim();
+      if(!name||!blood||!location||!mobile){alert('Please complete the form');return}
+      const req={id:uid(),name,blood,location,mobile,ts:Date.now()};
+      state.requests.unshift(req); saveState(); renderRequests(); alert('Request posted — donors will be able to see it')
+    })
+
+    function renderDonors(opts={}){
+      const list = document.getElementById('donorList'); list.innerHTML='';
+      const qBlood = (document.getElementById('searchBlood').value||'').trim().toUpperCase();
+      const qLoc = (document.getElementById('searchLocation').value||'').trim().toLowerCase();
+      let donors = state.donors.slice().reverse();
+
+      if(qBlood) donors = donors.filter(d=>d.blood && d.blood.toUpperCase().includes(qBlood));
+      if(qLoc) donors = donors.filter(d=>d.location && d.location.toLowerCase().includes(qLoc));
+
+      // If nearby requested and donors have geo, sort by distance
+      if(opts.nearby){
+        function dist(a,b){ // km
+          const R=6371; const dLat=(b.lat-a.lat)*Math.PI/180; const dLng=(b.lng-a.lng)*Math.PI/180; const lat1=a.lat*Math.PI/180; const lat2=b.lat*Math.PI/180; const aa=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)*Math.sin(dLng/2); const c=2*Math.atan2(Math.sqrt(aa),Math.sqrt(1-aa)); return R*c
+        }
+        donors = donors.map(d=>({d,dist: d.geo? dist(opts.nearby, d.geo):99999})).sort((a,b)=>a.dist-b.dist).map(x=>x.d)
+      }
+
+      if(donors.length===0){ list.innerHTML='<div class="muted">No donors found.</div>'; return }
+      donors.forEach(d=>{
+        const el = document.createElement('div'); el.className='donor';
+        const meta = document.createElement('div'); meta.className='meta';
+        const name = document.createElement('div'); name.innerHTML = '<strong>'+escapeHtml(d.name)+'</strong> <div class="muted">'+escapeHtml(d.location)+' • Age '+d.age+'</div>';
+        const info = document.createElement('div'); info.className='muted'; info.innerText = d.blood + ' • ' + d.mobile + ' • Donated this year: '+(d.donationCountThisYear||0);
+        meta.appendChild(name); meta.appendChild(info);
+
+        const actions = document.createElement('div');
+        const badge = document.createElement('div'); badge.className='badge '+(d.available? 'available':'not'); badge.innerText = d.available? 'Available':'Not available';
+        const contact = document.createElement('button'); contact.className='btn ghost'; contact.innerText='Contact'; contact.addEventListener('click',()=>{
+          const txt = `Hello ${d.name},\nI need blood ${d.blood} near ${d.location}. Please contact: YOUR_NUMBER`;
+          prompt('Copy this message to contact donor (or click OK to open sms/whatsapp link):', txt);
+        })
+        actions.appendChild(badge); actions.appendChild(contact);
+        el.appendChild(meta); el.appendChild(actions);
+        list.appendChild(el);
+      })
+    }
+
+    function renderRequests(){
+      const el = document.getElementById('needList'); el.innerHTML='';
+      if(state.requests.length===0){ el.innerHTML='<div class="muted">No active requests.</div>'; return }
+      state.requests.forEach(r=>{
+        const row = document.createElement('div'); row.className='donor';
+        row.innerHTML = `<div><strong>${escapeHtml(r.name)}</strong><div class="muted">Needs ${escapeHtml(r.blood)} • ${escapeHtml(r.location)}</div></div><div><button class=\"btn ghost\" onclick=\"window.alert('Contact: ${escapeHtml(r.mobile)}')\">Contact</button></div>`;
+        el.appendChild(row);
+      })
+    }
+
+    // small escape
+    function escapeHtml(s){ return (s+'').replace(/[&<>\"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])) }
+
+    // Prefill with sample donors if none exist (for demo)
+    if(state.donors.length===0){ state.donors = [
+      {id:uid(),name:'Ravi Kumar',age:29,blood:'O+',email:'',location:'Hyderabad, Banjara',mobile:'9000000001',geo:null,available:true,donations:[],donationCountThisYear:1,lastDonationYear:new Date().getFullYear()},
+      {id:uid(),name:'Sita Sharma',age:34,blood:'A-',email:'',location:'Mumbai, Bandra',mobile:'9000000002',geo:null,available:false,donations:[],donationCountThisYear:0,lastDonationYear:null}
+    ]; saveState(); }
+
+    // initial render
+    renderDonors(); renderRequests();
+
+    // small helper to persist 'Available' toggle per donor list (double-click to toggle)
+    document.getElementById('donorList').addEventListener('dblclick',e=>{
+      const node = e.target.closest('.donor'); if(!node) return; const idx = Array.from(node.parentNode.children).indexOf(node); const donors = state.donors.slice().reverse(); const donor = donors[idx]; if(!donor) return; donor.available = !donor.available; saveState(); renderDonors();
+    })
+  </script>
+</body>
+</html>
